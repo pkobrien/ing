@@ -1,4 +1,4 @@
-(ns styling.app
+(ns app
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]))
@@ -10,5 +10,4 @@
                  [:li {:key n} n])]
           (html/submit-button "React!")])))
 
-(defn main []
-  (om/root widget {} {:target js/document.body}))
+(om/root widget {} {:target js/document.body})
