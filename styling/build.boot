@@ -8,7 +8,8 @@
                  [pandeiro/boot-http         "0.6.3-SNAPSHOT"  :scope "test"]
                  [org.clojure/clojurescript "0.0-3308"]
                  [org.omcljs/om "0.8.8"]
-                 [sablono "0.3.4"]])
+                 [sablono "0.3.4"]
+                 [garden "1.2.5"]])
 
 (require
  '[adzerk.boot-cljs :refer [cljs]]
