@@ -4,25 +4,28 @@
             [sablono.core :as html :refer-macros [html]]
             [garden.core :refer [css]]))
 
-(defn page []
-  (html [:div {:style {:color "red"}}
-         [:h1 "Demonstrating Styling"]
-         [:p "Hello, Styling!"]
-         ]))
+(enable-console-print!)
 
-#_(defn page []
-  (html [:head
-         [:title "Demo"]
-         ; [:style {:type "text/css"} (page-css)]
-         ]
-        [:body
+(defn set-styles [styles]
+  (let [el (.createElement js/document "style")
+        node (.createTextNode js/document styles)]
+    (.appendChild el node)
+    (.appendChild (.-head js/document) el)
+    el))
+
+(defn set-title [title]
+  (set! (. js/document -title) title)
+  js/document.title)
+
+(defn page []
+  (html [:div
+         [:h1 "Demonstrating Styling"]
+         [:p {:style {:color "red"}} "Hello, Styling!"]
          [:header.box]
          ]))
 
-#_(defn page []
-  (html [:div "Hello world!"
-         [:ul (for [n (range 1 15)]
-                [:li {:key n} n])]]))
+(def styles
+  (css [:h1 :h2 :h3 {:font-weight "none"}]))
 
 (defn root [data]
   (om/component
@@ -31,4 +34,8 @@
 (defn main []
   (om/root root {} {:target js/document.body}))
 
-(main)
+(defn init []
+  (set-title "Styling")
+  (set-styles styles)
+  (prn styles)
+  (main))

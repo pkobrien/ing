@@ -26,7 +26,7 @@
   (comp (serve :dir "target/")
         (watch)
         (speak)
-        (reload :on-jsload 'app.core/main)
+        (reload :on-jsload 'app.core/init)
         (cljs-repl)
         (cljs :source-map true :optimizations :none)))
 
@@ -35,7 +35,7 @@
   (comp (serve :dir "target/")
         (watch)
         (speak)
-        (reload :on-jsload 'app.core/main)
+        (reload :on-jsload 'app.core/init)
         (cljs-repl)
         (cljs-test-node-runner :namespaces '[app.test])
         (cljs :source-map true :optimizations :none)
