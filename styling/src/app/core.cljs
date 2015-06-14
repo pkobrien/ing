@@ -31,7 +31,7 @@
   js/document.title)
 
 (defn body []
-  (html [:div
+  (html [:body
          [:header.box]
          [:article.box]
          [:aside.box]
@@ -39,10 +39,10 @@
          ]))
 
 (def stylesheet
-  (css [:body :div
+  (css [:body
         {:display "flex"}
         {:flex-flow "row"}
-        {:justify-content "space-around"}
+        {:justify-content "space-between"}
         {:align-items "stretch"}]
        [:header
         {:background-color (nth palette 0)}
