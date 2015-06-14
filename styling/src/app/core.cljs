@@ -7,7 +7,7 @@
             [garden.color :as color :refer [hsl rgb]]
             [garden.core :refer [css]]
             [garden.stylesheet :refer [at-media]]
-            [garden.units :as u :refer [px pt]]))
+            [garden.units :as u :refer [em pt px]]))
 
 (enable-console-print!)
 
@@ -15,9 +15,13 @@
 
 (defonce app-state (atom init-state))
 
-(defn set-styles [styles]
+(def palette
+  (let [base-color (hsl 0 100 50)]
+    (color/shades base-color)))
+
+(defn set-stylesheet [stylesheet]
   (let [el (.createElement js/document "style")
-        node (.createTextNode js/document styles)]
+        node (.createTextNode js/document stylesheet)]
     (.appendChild el node)
     (.appendChild (.-head js/document) el)
     el))
@@ -26,34 +30,42 @@
   (set! (. js/document -title) title)
   js/document.title)
 
-(defn page []
+(defn body []
   (html [:div
-         [:h1 "Demonstrating Styling"]
-         [:p {:style {:color "red"}} "Hello, Styling!"]
          [:header.box]
+         [:article.box]
+         [:aside.box]
+         [:footer.box]
          ]))
 
-(defn foo [a b]
-  (+ a b))
-
-(defn bar [x y]
-  (* x y 42))
-
-(defn baz [a b]
-  (+ a b 42))
-
-(def styles
-  (css [:h1 :h2 {:font-weight "none"}]))
+(def stylesheet
+  (css [:body :div
+        {:display "flex"}
+        {:flex-flow "row"}
+        {:justify-content "space-around"}
+        {:align-items "stretch"}]
+       [:header
+        {:background-color (nth palette 0)}
+        {:flex "0 0 auto"}]
+       [:article
+        {:background-color (nth palette 1)}]
+       [:aside
+        {:background-color (nth palette 2)}]
+       [:footer
+        {:background-color (nth palette 3)}]
+       [:.box
+        {:min-height (px 100)}
+        {:width (px 200)}]))
 
 (defn root [data]
   (om/component
-   (page)))
+   (body)))
 
 (defn main []
   (om/root root app-state {:target js/document.body}))
 
 (defn init []
   (set-title (:title init-state))
-  (set-styles styles)
-  (prn styles)
+  (set-stylesheet stylesheet)
+  ;(prn stylesheet)
   (main))
