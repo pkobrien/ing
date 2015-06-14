@@ -19,7 +19,7 @@
   '[pandeiro.boot-http :refer [serve]])
 
 (task-options!
-  reload {:on-jsload 'app.core/init)
+  reload {:on-jsload 'app.core/init}
   serve {:dir "target/"})
 
 (deftask build []
