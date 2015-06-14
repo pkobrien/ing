@@ -11,16 +11,9 @@
 
 (enable-console-print!)
 
-(defonce init-state {:title "Styling"})
+(defonce init-state {:title "Something"})
 
 (defonce app-state (atom init-state))
-
-(defn set-styles [styles]
-  (let [el (.createElement js/document "style")
-        node (.createTextNode js/document styles)]
-    (.appendChild el node)
-    (.appendChild (.-head js/document) el)
-    el))
 
 (defn set-title [title]
   (set! (. js/document -title) title)
@@ -28,22 +21,9 @@
 
 (defn page []
   (html [:div
-         [:h1 "Demonstrating Styling"]
-         [:p {:style {:color "red"}} "Hello, Styling!"]
-         [:header.box]
+         [:h1 "Demonstrating Something"]
+         [:p {:style {:color "red"}} "Hello, World!"]
          ]))
-
-(defn foo [a b]
-  (+ a b))
-
-(defn bar [x y]
-  (* x y 42))
-
-(defn baz [a b]
-  (+ a b 42))
-
-(def styles
-  (css [:h1 :h2 {:font-weight "none"}]))
 
 (defn root [data]
   (om/component
@@ -54,8 +34,6 @@
 
 (defn init []
   (set-title (:title init-state))
-  (set-styles styles)
-  (prn styles)
   (main))
 
 
@@ -78,19 +56,3 @@
 ;; 3) Shutdown
 ;; app.core=> :cljs/quit
 ;; boot.user=> (quit)
-
-
-;; Example Session:
-
-;; > boot repl -c
-;; boot.user=> (start-repl)
-;; cljs.user=> (js/alert "This is a test of the emergency broadcasting system.")
-;; cljs.user=> (require '[app.core :as app])
-;; cljs.user=> (app/foo 3 4)
-;; 7
-;; cljs.user=> (in-ns 'app.core)
-;; app.core=> (foo 3 4)
-;; 7
-;; app.core=> :cljs/quit
-;; boot.user=> (quit)
-;; Bye for now!
