@@ -35,24 +35,3 @@
 (defn init []
   (set-title (:title init-state))
   (main))
-
-
-;; -----------------------------------------------------------------------------
-;; REPL Stuff
-
-
-;; Canonical Workflow:
-
-;; 1) Startup
-;; > boot repl -c
-;; boot.user=> (start-repl)
-;; cljs.user=> (require '[app.core])
-;; cljs.user=> (in-ns 'app.core)
-;; app.core=>
-
-;; 2) Make a change to core.cljs that requires a reload
-;; app.core=> (require '[app.core] :reload)
-
-;; 3) Shutdown
-;; app.core=> :cljs/quit
-;; boot.user=> (quit)
