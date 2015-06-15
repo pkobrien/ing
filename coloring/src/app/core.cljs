@@ -19,15 +19,15 @@
   (set! (. js/document -title) title)
   js/document.title)
 
-(defn page []
-  (html [:div
+(defn body []
+  (html [:body
          [:h1 "Demonstrating Coloring"]
          [:p {:style {:color "red"}} "Hello, World!"]
          ]))
 
 (defn root [data]
   (om/component
-   (page)))
+   (body)))
 
 (defn main []
   (om/root root app-state {:target js/document.body}))
