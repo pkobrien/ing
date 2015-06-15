@@ -7,6 +7,7 @@ REPL Stuff
 
 Canonical Workflow:
 
+```
 1) Startup
 > boot repl -c
 boot.user=> (start-repl)
@@ -20,10 +21,11 @@ app.core=> (require '[app.core] :reload)
 3) Shutdown
 app.core=> :cljs/quit
 boot.user=> (quit)
-
+```
 
 Example Session:
 
+```
 > boot repl -c
 boot.user=> (start-repl)
 cljs.user=> (js/alert "This is a test of the emergency broadcasting system.")
@@ -36,3 +38,4 @@ app.core=> (foo 3 4)
 app.core=> :cljs/quit
 boot.user=> (quit)
 Bye for now!
+```
