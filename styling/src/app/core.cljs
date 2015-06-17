@@ -29,8 +29,13 @@
 (def sans ["\"Open Sans\"" "Avenir" "Helvetica" "sans-serif"])
 (def sans-serif '[helvetica arial sans-serif])
 
-;(defrule body :body)
-(defrule page-body :body)
+(defrule article :article)
+(defrule aside :aside)
+(defrule body :body)
+(defrule footer :footer)
+(defrule header :header)
+
+;(defrule page-body :body)
 (defrule headings :h1 :h2 :h3)
 (defrule sub-headings :h4 :h5 :h6)
 (defrule on-hover :&:hover)
@@ -40,10 +45,10 @@
 (defrule ordered-list :ol)
 (defrule unordered-list :ul)
 
-(defrule center :div.center)
-(defrule top :section#top)
-(defrule main :section#main)
-(defrule sidebar :section#sidebar)
+;; (defrule center :div.center)
+;; (defrule top :section#top)
+;; (defrule main :section#main)
+;; (defrule sidebar :section#sidebar)
 
 ;; (defn dangerous
 ;;   ([component content]
@@ -82,20 +87,20 @@
 
 (def app-stylesheet
   (css
-   [:body
+   (body
     {:display "flex"}
     {:flex-flow "row"}
     {:justify-content "space-between"}
-    {:align-items "stretch"}]
-   [:header
+    {:align-items "stretch"})
+   (header
     {:background-color (nth palette 0)}
-    {:flex "0 0 auto"}]
-   [:article
-    {:background-color (nth palette 1)}]
-   [:aside
-    {:background-color (nth palette 2)}]
-   [:footer
-    {:background-color (nth palette 3)}]
+    {:flex "0 0 auto"})
+   (article
+    {:background-color (nth palette 1)})
+   (aside
+    {:background-color (nth palette 2)})
+   (footer
+    {:background-color (nth palette 3)})
    [:.box
     {:min-height (px 100)}
     {:width (px 200)}]))
