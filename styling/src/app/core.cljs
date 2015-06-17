@@ -34,6 +34,7 @@
 (defrule body :body)
 (defrule footer :footer)
 (defrule header :header)
+(defrule main :main)
 
 ;(defrule page-body :body)
 (defrule headings :h1 :h2 :h3)
@@ -108,10 +109,7 @@
 (defn app-root [data owner]
   (om/component (app-html data)))
 
-(defn main []
-  (om/root app-root app-state {:target js/document.body}))
-
 (defn init []
   (set-title (:title init-state))
   (set-stylesheet app-stylesheet)
-  (main))
+  (om/root app-root app-state {:target js/document.body}))
