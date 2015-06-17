@@ -7,8 +7,7 @@
                   [boot-cljs-test/node-runner "0.1.0"           :scope "test"]
                   [pandeiro/boot-http         "0.6.3-SNAPSHOT"  :scope "test"]
                   [org.clojure/clojurescript "0.0-3308"]
-                  [org.omcljs/om "0.8.8"]
-                  [sablono "0.3.4"]
+                  [freactive "0.2.0-SNAPSHOT"]
                   [garden "1.2.5"]])
 
 (require

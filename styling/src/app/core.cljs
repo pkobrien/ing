@@ -1,33 +1,34 @@
 (ns app.core
-  (:refer-clojure :exclude [+ - * /])
-  (:require-macros [garden.def :refer [defcssfn defkeyframes defrule defstyles defstylesheet]])
-  (:require [garden.arithmetic :refer [+ - * /]]
-            [garden.color :as color :refer [hsl rgb]]
-            [garden.core :refer [css]]
-            [garden.stylesheet :refer [at-media]]
-            [garden.units :as u :refer [em pt px]]
-            [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
-            [sablono.core :as html :refer-macros [html]]))
+  (:refer-clojure :exclude [atom + - * /])
+  (:require
+   [freactive.core :as r :refer [atom cursor]]
+   [freactive.dom :as dom]
+   [freactive.animation :as animation]
+   [garden.arithmetic :refer [+ - * /]]
+   [garden.color :as color :refer [hsl rgb]]
+   [garden.core :refer [css]]
+   [garden.stylesheet :refer [at-media]]
+   [garden.units :as u :refer [em pt px]])
+  (:require-macros
+   [freactive.macros :refer [rx]]
+   [garden.def :refer [defcssfn defkeyframes defrule defstyles defstylesheet]]))
 
 (enable-console-print!)
 
 
-(def styles list) ; or use defstyles - "Convenience macro equivalent to `(def name (list styles*))`."
-
-(def center-text {:text-align "center"})
+;; (def center-text {:text-align "center"})
 
 ;; (def clearfix
 ;;   ["&" {:*zoom 1}
 ;;    ["&:before" "&:after" {:content "\"\"" :display "table"}]
 ;;    ["&:after" {:clear "both"}]])
 
-(def gutter (px 20))
+;; (def gutter (px 20))
 
-(def alegreya ["Alegreya" "Baskerville" "Georgia" "Times" "serif"])
-(def mono ["Inconsolata" "Menlo" "Courier" "monospace"])
-(def sans ["\"Open Sans\"" "Avenir" "Helvetica" "sans-serif"])
-(def sans-serif '[helvetica arial sans-serif])
+;; (def alegreya ["Alegreya" "Baskerville" "Georgia" "Times" "serif"])
+;; (def mono ["Inconsolata" "Menlo" "Courier" "monospace"])
+;; (def sans ["\"Open Sans\"" "Avenir" "Helvetica" "sans-serif"])
+;; (def sans-serif '[helvetica arial sans-serif])
 
 (defrule article :article)
 (defrule aside :aside)
@@ -36,15 +37,16 @@
 (defrule header :header)
 (defrule main :main)
 
-;(defrule page-body :body)
 (defrule headings :h1 :h2 :h3)
 (defrule sub-headings :h4 :h5 :h6)
-(defrule on-hover :&:hover)
-(defrule links :a:link)
-(defrule active-links :a:active)
-(defrule visited-links :a:visited)
+
 (defrule ordered-list :ol)
 (defrule unordered-list :ul)
+
+(defrule active-links :a:active)
+(defrule links :a:link)
+(defrule on-hover :&:hover)
+(defrule visited-links :a:visited)
 
 ;; (defrule center :div.center)
 ;; (defrule top :section#top)
@@ -77,39 +79,32 @@
 
 (defonce app-state (atom init-state))
 
-(defn app-html [data]
-  (html
-   [:body
-    [:header.box]
-    [:article.box]
-    [:aside.box]
-    [:footer.box]
-    ]))
+(defn app-html []
+  [:body
+   [:header
+    [:h1 "Header Level 1"]
+    ]
+   [:main
+    [:p "Main content goes here."]
+    ]
+   [:footer
+    [:p "Footer content."]
+    ]
+   ])
 
-(def app-stylesheet
+#_(def app-stylesheet
   (css
    (body
-    {:display "flex"}
-    {:flex-flow "row"}
-    {:justify-content "space-between"}
-    {:align-items "stretch"})
+    )
    (header
-    {:background-color (nth palette 0)}
-    {:flex "0 0 auto"})
-   (article
-    {:background-color (nth palette 1)})
-   (aside
-    {:background-color (nth palette 2)})
+    )
+   (main
+    )
    (footer
-    {:background-color (nth palette 3)})
-   [:.box
-    {:min-height (px 100)}
-    {:width (px 200)}]))
-
-(defn app-root [data owner]
-  (om/component (app-html data)))
+    )
+   ))
 
 (defn init []
   (set-title (:title init-state))
-  (set-stylesheet app-stylesheet)
-  (om/root app-root app-state {:target js/document.body}))
+;  (set-stylesheet app-stylesheet)
+  (dom/mount! js/document.body (app-html)))
