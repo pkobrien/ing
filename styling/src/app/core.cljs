@@ -1,19 +1,21 @@
 (ns app.core
-  (:refer-clojure :exclude [atom + - * /])
+  (:refer-clojure :exclude [+ - * /])
+  (:require-macros
+   [freactive.macros :refer [rx]]
+   [garden.def :refer [defcssfn defkeyframes defrule defstyles defstylesheet]])
   (:require
-   [freactive.core :as r :refer [atom cursor]]
+   [freactive.core :as r]
    [freactive.dom :as dom]
    [freactive.animation :as animation]
    [garden.arithmetic :refer [+ - * /]]
    [garden.color :as color :refer [hsl rgb]]
    [garden.core :refer [css]]
    [garden.stylesheet :refer [at-media]]
-   [garden.units :as u :refer [em pt px]])
-  (:require-macros
-   [freactive.macros :refer [rx]]
-   [garden.def :refer [defcssfn defkeyframes defrule defstyles defstylesheet]]))
+   [garden.units :as u :refer [em pt px]]))
 
 (enable-console-print!)
+
+(dom/enable-fps-instrumentation!)
 
 
 ;; (def center-text {:text-align "center"})
@@ -75,22 +77,45 @@
   js/document.title)
 
 
-(defonce init-state {:title "Styling"})
+;; (defonce update-counter
+;;   (js/setInterval
+;;    #(dispatch [:update-counter])
+;;    (* 4 1000)))  ; every so often
 
-(defonce app-state (atom init-state))
+;; (defonce update-current-time-value
+;;   (js/setInterval
+;;    #(dispatch [:update-current-time-value])
+;;    1000))  ; every second (1000 ms)
 
-(defn app-html []
-  [:body
-   [:header
-    [:h1 "Header Level 1"]
-    ]
-   [:main
-    [:p "Main content goes here."]
-    ]
-   [:footer
-    [:p "Footer content."]
-    ]
-   ])
+
+;; (defn save-state []
+;;   Better to write to a temp file and then rename the temp file.
+;;   (spit "somefile" (prn-str @app-state)))
+
+;; (defn load-state []
+;;   (reset! app-state (read-string (slurp "somefile"))))
+
+(defonce app-state
+  (r/atom
+   {:app-name "Styling"
+    :counter 0
+    :current-time {:color "#ccc"
+                   :value (js/Date.)}
+    :mouse-pos {:x nil
+                :y nil}
+    }))
+
+(defonce rc-mouse-pos (r/cursor app-state :mouse-pos))
+
+(defn listen-to-mousemove! []
+  (dom/listen!
+   js/window "mousemove"
+   (fn [e]
+     (swap! rc-mouse-pos assoc :x (.-clientX e) :y (.-clientY e)))))
+
+(defonce app-init
+  (do
+    (listen-to-mousemove!)))
 
 #_(def app-stylesheet
   (css
@@ -104,7 +129,20 @@
     )
    ))
 
+(defn app-html []
+  [:div
+   [:header
+    [:h1 "Header Level 1"]
+    ]
+   [:main
+    [:p "Main content goes here."]
+    ]
+   [:footer
+    [:p "Footer content. Mouse position: " (rx (str "(" (:x @rc-mouse-pos) ", " (:y @rc-mouse-pos) ")"))]
+    ]
+   ])
+
 (defn init []
-  (set-title (:title init-state))
+  (set-title (:app-name @app-state))
 ;  (set-stylesheet app-stylesheet)
-  (dom/mount! js/document.body (app-html)))
+  (dom/mount! "app" (app-html)))
