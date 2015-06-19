@@ -18,19 +18,8 @@
 (dom/enable-fps-instrumentation!)
 
 
-;; (def center-text {:text-align "center"})
-
-;; (def clearfix
-;;   ["&" {:*zoom 1}
-;;    ["&:before" "&:after" {:content "\"\"" :display "table"}]
-;;    ["&:after" {:clear "both"}]])
-
-;; (def gutter (px 20))
-
-;; (def alegreya ["Alegreya" "Baskerville" "Georgia" "Times" "serif"])
-;; (def mono ["Inconsolata" "Menlo" "Courier" "monospace"])
-;; (def sans ["\"Open Sans\"" "Avenir" "Helvetica" "sans-serif"])
-;; (def sans-serif '[helvetica arial sans-serif])
+;; -----------------------------------------------------------------------------
+;; CSS Helpers
 
 (defrule article :article)
 (defrule aside :aside)
@@ -50,6 +39,20 @@
 (defrule on-hover :&:hover)
 (defrule visited-links :a:visited)
 
+;; (def center-text {:text-align "center"})
+
+;; (def clearfix
+;;   ["&" {:*zoom 1}
+;;    ["&:before" "&:after" {:content "\"\"" :display "table"}]
+;;    ["&:after" {:clear "both"}]])
+
+;; (def gutter (px 20))
+
+;; (def alegreya ["Alegreya" "Baskerville" "Georgia" "Times" "serif"])
+;; (def mono ["Inconsolata" "Menlo" "Courier" "monospace"])
+;; (def sans ["\"Open Sans\"" "Avenir" "Helvetica" "sans-serif"])
+;; (def sans-serif '[helvetica arial sans-serif])
+
 ;; (defrule center :div.center)
 ;; (defrule top :section#top)
 ;; (defrule main :section#main)
@@ -65,35 +68,13 @@
   (let [base-color (hsl 0 100 50)]
     (color/shades base-color)))
 
-(defn set-stylesheet [stylesheet]
-  (let [el (.createElement js/document "style")
-        node (.createTextNode js/document stylesheet)]
-    (.appendChild el node)
-    (.appendChild (.-head js/document) el)
-    el))
 
-(defn set-title [title]
-  (set! (. js/document -title) title)
-  js/document.title)
+;; -----------------------------------------------------------------------------
+;; Application State / Cursors
 
+(defn- get-window-width [] (.-innerWidth js/window))
 
-;; (defonce update-counter
-;;   (js/setInterval
-;;    #(dispatch [:update-counter])
-;;    (* 4 1000)))  ; every so often
-
-;; (defonce update-current-time-value
-;;   (js/setInterval
-;;    #(dispatch [:update-current-time-value])
-;;    1000))  ; every second (1000 ms)
-
-
-;; (defn save-state []
-;;   Better to write to a temp file and then rename the temp file.
-;;   (spit "somefile" (prn-str @app-state)))
-
-;; (defn load-state []
-;;   (reset! app-state (read-string (slurp "somefile"))))
+(defn- get-window-height [] (.-innerHeight js/window))
 
 (defonce app-state
   (r/atom
@@ -103,19 +84,70 @@
                    :value (js/Date.)}
     :mouse-pos {:x nil
                 :y nil}
+    :window {:width (get-window-width)
+             :height (get-window-height)}
     }))
 
-(defonce rc-mouse-pos (r/cursor app-state :mouse-pos))
+;; (defn load-state! []
+;;   (reset! app-state (read-string (slurp "somefile"))))
 
-(defn listen-to-mousemove! []
+;; (defn save-state []
+;;   Better to write to a temp file and then rename the temp file.
+;;   (spit "somefile" (prn-str @app-state)))
+
+(defonce rc-current-time-value
+  (r/cursor app-state [:current-time :value]))
+
+(defonce rc-mouse-pos
+  (r/cursor app-state :mouse-pos))
+
+(defonce rc-window
+  (r/cursor app-state :window))
+
+(defn- listen-to-mousemove! []
   (dom/listen!
    js/window "mousemove"
    (fn [e]
-     (swap! rc-mouse-pos assoc :x (.-clientX e) :y (.-clientY e)))))
+     (swap! rc-mouse-pos assoc
+            :x (.-clientX e)
+            :y (.-clientY e)))))
 
-(defonce app-init
+(defn- listen-to-resize! []
+  (dom/listen!
+   js/window "resize"
+   (fn [e]
+     (swap! rc-window assoc
+            :width (get-window-width)
+            :height (get-window-height)))))
+
+(defonce init-app-listeners
   (do
-    (listen-to-mousemove!)))
+    (listen-to-mousemove!)
+    (listen-to-resize!)))
+
+(defonce on-interval-update-current-time-value!
+  (js/setInterval
+   #(reset! rc-current-time-value (js/Date.))
+   1000))  ; every second (1000 ms)
+
+
+;; -----------------------------------------------------------------------------
+;; Local State / Cursors
+
+(defonce clicks (r/atom 0))
+
+
+;; -----------------------------------------------------------------------------
+;; HTML
+
+(defn set-stylesheet! [stylesheet]
+  (let [el (.createElement js/document "style")
+        node (.createTextNode js/document stylesheet)]
+    (.appendChild el node)
+    (.appendChild (.-head js/document) el)))
+
+(defn set-title! [title]
+  (set! (.-title js/document) title))
 
 #_(def app-stylesheet
   (css
@@ -129,20 +161,31 @@
     )
    ))
 
+(defn app-title []
+  (:app-name @app-state))
+
 (defn app-html []
   [:div
    [:header
     [:h1 "Header Level 1"]
+    [:h2 "Header Level 2"]
     ]
    [:main
     [:p "Main content goes here."]
+    [:button {:on-click (fn [_] (swap! clicks inc))} "Click Me!"]
     ]
    [:footer
-    [:p "Footer content. Mouse position: " (rx (str "(" (:x @rc-mouse-pos) ", " (:y @rc-mouse-pos) ")"))]
+    [:p "Footer content."]
+    [:p "Mouse position: " (rx (str "(" (:x @rc-mouse-pos) ", " (:y @rc-mouse-pos) ")"))]
+    [:p "Window size is: " (rx (str (:width @rc-window) " by " (:height @rc-window)))]
+    [:p "Time: " (rx (str @rc-current-time-value))]
+    [:p "Clicks: " (rx (str @clicks))]
+    [:p "Frames/second: " (rx (str @dom/fps)) " (60 maximum)"]
     ]
    ])
 
 (defn init []
-  (set-title (:app-name @app-state))
-;  (set-stylesheet app-stylesheet)
-  (dom/mount! "app" (app-html)))
+;  (set-stylesheet! app-stylesheet)
+  (set-title! (app-title)))
+
+(dom/mount! "app" (app-html))
