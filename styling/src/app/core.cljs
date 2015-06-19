@@ -101,6 +101,12 @@
 (defonce rc-mouse-pos
   (r/cursor app-state :mouse-pos))
 
+(defonce rc-mouse-pos-x
+  (r/cursor app-state [:mouse-pos :x]))
+
+(defonce rc-mouse-pos-y
+  (r/cursor app-state [:mouse-pos :y]))
+
 (defonce rc-window
   (r/cursor app-state :window))
 
@@ -108,9 +114,7 @@
   (dom/listen!
    js/window "mousemove"
    (fn [e]
-     (swap! rc-mouse-pos assoc
-            :x (.-clientX e)
-            :y (.-clientY e)))))
+     (assoc! rc-mouse-pos :x (.-clientX e) :y (.-clientY e)))))
 
 (defn- listen-to-resize! []
   (dom/listen!
@@ -135,6 +139,11 @@
 ;; Local State / Cursors
 
 (defonce clicks (r/atom 0))
+
+(defonce rc-clicks (r/lens-cursor clicks str #(inc %1)))
+
+(defn on-button-click []
+  (reset! rc-clicks))
 
 
 ;; -----------------------------------------------------------------------------
@@ -172,15 +181,24 @@
     ]
    [:main
     [:p "Main content goes here."]
-    [:button {:on-click (fn [_] (swap! clicks inc))} "Click Me!"]
+    [:button {:on-click on-button-click} "Click Me!"]
     ]
    [:footer
     [:p "Footer content."]
     [:p "Mouse position: " (rx (str "(" (:x @rc-mouse-pos) ", " (:y @rc-mouse-pos) ")"))]
+    [:p "Mouse position: " (str "(" (:x @rc-mouse-pos) ", " (:y @rc-mouse-pos) ")")]  ; NOT working
+    [:p "Mouse position: " (str "(" (:x rc-mouse-pos) ", " (:y rc-mouse-pos) ")")]  ; NOT working
+    [:p "Mouse pos: " (str (vals @rc-mouse-pos))]
+    [:p "Mouse X: " rc-mouse-pos-x]
+    [:p "Mouse Y: " rc-mouse-pos-y]
     [:p "Window size is: " (rx (str (:width @rc-window) " by " (:height @rc-window)))]
     [:p "Time: " (rx (str @rc-current-time-value))]
-    [:p "Clicks: " (rx (str @clicks))]
-    [:p "Frames/second: " (rx (str @dom/fps)) " (60 maximum)"]
+    [:p "Time: " (str @rc-current-time-value)]  ; NOT working
+    [:p "Time: " (str rc-current-time-value)]  ; NOT working
+    [:p "Clicks: " (rx @rc-clicks)]
+    [:p "Clicks: " rc-clicks]
+    [:p "Frames/second: " (rx @dom/fps) " (60 maximum)"]
+    [:p "Frames/second: " dom/fps " (60 maximum)"]
     ]
    ])
 
