@@ -4,16 +4,14 @@
    [freactive.macros :refer [rx]])
   (:require
    [app.cuss :as cuss]
+   [app.poly :as poly]
    [freactive.core :as r]
    [freactive.dom :as rdom]
    [freactive.animation :as animation]
    [garden.arithmetic :refer [+ - * /]]
    [garden.color :as color :refer [hsl rgb]]
    [garden.core :refer [css]]
-   [garden.units :as u :refer [em pt px]]
-   [goog.dom :as gdom]
-   [goog.dom.classes :as gclasses]
-   [goog.events :as gevents])
+   [garden.units :as u :refer [em pt px]])
   (:import [goog Timer]))
 
 (enable-console-print!)
