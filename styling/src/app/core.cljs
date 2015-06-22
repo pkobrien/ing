@@ -5,17 +5,21 @@
    [garden.def :refer [defcssfn defkeyframes defrule defstyles defstylesheet]])
   (:require
    [freactive.core :as r]
-   [freactive.dom :as dom]
+   [freactive.dom :as rdom]
    [freactive.animation :as animation]
    [garden.arithmetic :refer [+ - * /]]
    [garden.color :as color :refer [hsl rgb]]
    [garden.core :refer [css]]
    [garden.stylesheet :refer [at-media]]
-   [garden.units :as u :refer [em pt px]]))
+   [garden.units :as u :refer [em pt px]]
+   [goog.dom :as gdom]
+   [goog.dom.classes :as gclasses]
+   [goog.events :as gevents])
+  (:import [goog Timer]))
 
 (enable-console-print!)
 
-(dom/enable-fps-instrumentation!)
+(rdom/enable-fps-instrumentation!)
 
 
 ;; -----------------------------------------------------------------------------
@@ -78,8 +82,9 @@
 
 (defonce app-state
   (r/atom
-   {:app-name "Styling"
-    :counter 0
+   {:app {:name "Styling"
+          :version "0.1.0"}
+    :click-counter 0
     :current-time {:color "#ccc"
                    :value (js/Date.)}
     :mouse-pos {:x nil
@@ -95,29 +100,50 @@
 ;;   Better to write to a temp file and then rename the temp file.
 ;;   (spit "somefile" (prn-str @app-state)))
 
-(defonce rc-current-time-value
-  (r/cursor app-state [:current-time :value]))
+(def rc (partial r/cursor app-state))
+
+(defonce rc-app-name
+  (rc [:app :name]))
+
+(defonce rc-app-version
+  (rc [:app :version]))
+
+(defonce rc-clicks
+  (r/lens-cursor (rc :click-counter) identity #(inc %)))
+
+(defonce rc-current-time
+  (rc [:current-time :value]))
 
 (defonce rc-mouse-pos
-  (r/cursor app-state :mouse-pos))
+  (rc :mouse-pos))
 
 (defonce rc-mouse-pos-x
-  (r/cursor app-state [:mouse-pos :x]))
+  (rc [:mouse-pos :x]))
 
 (defonce rc-mouse-pos-y
-  (r/cursor app-state [:mouse-pos :y]))
+  (rc [:mouse-pos :y]))
 
 (defonce rc-window
-  (r/cursor app-state :window))
+  (rc :window))
 
-(defn- listen-to-mousemove! []
-  (dom/listen!
+(defonce rc-window-h
+  (rc [:window :height]))
+
+(defonce rc-window-w
+  (rc [:window :width]))
+
+
+;; -----------------------------------------------------------------------------
+;; Event Handlers
+
+(defn- listen-for-mousemove! []
+  (rdom/listen!
    js/window "mousemove"
    (fn [e]
      (assoc! rc-mouse-pos :x (.-clientX e) :y (.-clientY e)))))
 
-(defn- listen-to-resize! []
-  (dom/listen!
+(defn- listen-for-resize! []
+  (rdom/listen!
    js/window "resize"
    (fn [e]
      (swap! rc-window assoc
@@ -126,28 +152,20 @@
 
 (defonce init-app-listeners
   (do
-    (listen-to-mousemove!)
-    (listen-to-resize!)))
-
-(defonce on-interval-update-current-time-value!
-  (js/setInterval
-   #(reset! rc-current-time-value (js/Date.))
-   1000))  ; every second (1000 ms)
-
-
-;; -----------------------------------------------------------------------------
-;; Local State / Cursors
-
-(defonce clicks (r/atom 0))
-
-(defonce rc-clicks (r/lens-cursor clicks str #(inc %1)))
+    (listen-for-mousemove!)
+    (listen-for-resize!)))
 
 (defn on-button-click []
   (reset! rc-clicks))
 
+(defonce on-interval-update-current-time!
+  (js/setInterval
+   #(reset! rc-current-time (js/Date.))
+   1000))  ; every second (1000 ms)
+
 
 ;; -----------------------------------------------------------------------------
-;; HTML
+;; Stylesheet
 
 (defn set-stylesheet! [stylesheet]
   (let [el (.createElement js/document "style")
@@ -155,55 +173,92 @@
     (.appendChild el node)
     (.appendChild (.-head js/document) el)))
 
-(defn set-title! [title]
-  (set! (.-title js/document) title))
-
-#_(def app-stylesheet
+(def app-stylesheet
   (css
+   [:*
+    {:box-sizing "border-box"}]
+   [:audio
+    {:width "100%"}]
+   [:img :video
+    {:height "auto" :max-width "100%"}]
+   [:div :span
+    {:box-sizing "border-box"
+     :position "relative"
+     :display "flex"
+     :flex-direction "column"
+     :align-items "stretch"
+     :flex-shrink "0"
+     :border "2 solid black"
+     :margin "0"
+     :padding "0"
+     }]
    (body
+    {:color "red"}
     )
    (header
+    {:border {:width "1px" :style "dotted" :color "#333"}
+     :color "blue"}
     )
    (main
+    {:border {:width "2px" :style "dashed" :color "#666"}
+     :color "red"
+     :margin "1rem"
+     :padding "1rem"}
     )
    (footer
+    {:border {:width "1px" :style "dotted" :color "#333"}
+     :color "orange"}
     )
    ))
 
+
+;; -----------------------------------------------------------------------------
+;; Title
+
+(defn set-title! [title]
+  (set! (.-title js/document) title))
+
+(defn bind-title! [rw-title]
+  (r/bind-attr* rw-title set-title! rdom/queue-animation))
+
+(defn rw-app-title []
+  (rx (str @rc-app-name " " @rc-window-w " by " @rc-window-h)))
+
+;; (def title-binding (bind-title! (rw-app-title)))
+
+;; (r/dispose title-binding)
+
 (defn app-title []
-  (:app-name @app-state))
+  (str @rc-app-name " v" @rc-app-version))
+
+
+;; -----------------------------------------------------------------------------
+;; HTML
 
 (defn app-html []
-  [:div
+  [:div {:style "max-width: 20rem"}
    [:header
     [:h1 "Header Level 1"]
     [:h2 "Header Level 2"]
     ]
    [:main
-    [:p "Main content goes here."]
-    [:button {:on-click on-button-click} "Click Me!"]
+    [:p "Date/Time: " (rx (str @rc-current-time))]
+    [:p "Window size: " rc-window-w "px by " rc-window-h "px"]
+    [:p "Mouse position: (" rc-mouse-pos-x ", " rc-mouse-pos-y ")"]
+    [:p "Frames/second (60 max): " rdom/fps]
+    [:p "Button Clicks: " rc-clicks " "
+     [:button {:on-click on-button-click} "Click Me!"]]
     ]
    [:footer
     [:p "Footer content."]
-    [:p "Mouse position: " (rx (str "(" (:x @rc-mouse-pos) ", " (:y @rc-mouse-pos) ")"))]
-    [:p "Mouse position: " (str "(" (:x @rc-mouse-pos) ", " (:y @rc-mouse-pos) ")")]  ; NOT working
-    [:p "Mouse position: " (str "(" (:x rc-mouse-pos) ", " (:y rc-mouse-pos) ")")]  ; NOT working
-    [:p "Mouse pos: " (str (vals @rc-mouse-pos))]
-    [:p "Mouse X: " rc-mouse-pos-x]
-    [:p "Mouse Y: " rc-mouse-pos-y]
-    [:p "Window size is: " (rx (str (:width @rc-window) " by " (:height @rc-window)))]
-    [:p "Time: " (rx (str @rc-current-time-value))]
-    [:p "Time: " (str @rc-current-time-value)]  ; NOT working
-    [:p "Time: " (str rc-current-time-value)]  ; NOT working
-    [:p "Clicks: " (rx @rc-clicks)]
-    [:p "Clicks: " rc-clicks]
-    [:p "Frames/second: " (rx @dom/fps) " (60 maximum)"]
-    [:p "Frames/second: " dom/fps " (60 maximum)"]
     ]
    ])
 
-(defn init []
-;  (set-stylesheet! app-stylesheet)
-  (set-title! (app-title)))
 
-(dom/mount! "app" (app-html))
+;; -----------------------------------------------------------------------------
+;; Init/Mount
+
+(defn ^:export init []
+  (set-stylesheet! app-stylesheet)
+  (set-title! (app-title))
+  (rdom/mount! "app" (app-html)))
