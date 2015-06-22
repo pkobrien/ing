@@ -24,10 +24,15 @@
 #_(defn app-html [data]
   (html
    [:body
-    [:header]
-    [:aside]
-    [:main]
-    [:footer]
+    [:header {:role "banner"}
+     [:nav {:role "navigation"}]
+     ]
+    [:aside {:role "complementary"}
+     ]
+    [:main
+     ]
+    [:footer {:role "contentinfo"}
+     ]
     ]))
 
 (defn app-html [data]
