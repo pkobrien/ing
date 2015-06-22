@@ -1,16 +1,15 @@
 (ns app.core
   (:refer-clojure :exclude [+ - * /])
   (:require-macros
-   [freactive.macros :refer [rx]]
-   [garden.def :refer [defcssfn defkeyframes defrule defstyles defstylesheet]])
+   [freactive.macros :refer [rx]])
   (:require
+   [app.cuss :as cuss]
    [freactive.core :as r]
    [freactive.dom :as rdom]
    [freactive.animation :as animation]
    [garden.arithmetic :refer [+ - * /]]
    [garden.color :as color :refer [hsl rgb]]
    [garden.core :refer [css]]
-   [garden.stylesheet :refer [at-media]]
    [garden.units :as u :refer [em pt px]]
    [goog.dom :as gdom]
    [goog.dom.classes :as gclasses]
@@ -23,64 +22,13 @@
 
 
 ;; -----------------------------------------------------------------------------
-;; CSS Helpers
-
-(defrule article :article)
-(defrule aside :aside)
-(defrule body :body)
-(defrule footer :footer)
-(defrule header :header)
-(defrule main :main)
-
-(defrule headings :h1 :h2 :h3)
-(defrule sub-headings :h4 :h5 :h6)
-
-(defrule ordered-list :ol)
-(defrule unordered-list :ul)
-
-(defrule active-links :a:active)
-(defrule links :a:link)
-(defrule on-hover :&:hover)
-(defrule visited-links :a:visited)
-
-;; (def center-text {:text-align "center"})
-
-;; (def clearfix
-;;   ["&" {:*zoom 1}
-;;    ["&:before" "&:after" {:content "\"\"" :display "table"}]
-;;    ["&:after" {:clear "both"}]])
-
-;; (def gutter (px 20))
-
-;; (def alegreya ["Alegreya" "Baskerville" "Georgia" "Times" "serif"])
-;; (def mono ["Inconsolata" "Menlo" "Courier" "monospace"])
-;; (def sans ["\"Open Sans\"" "Avenir" "Helvetica" "sans-serif"])
-;; (def sans-serif '[helvetica arial sans-serif])
-
-;; (defrule center :div.center)
-;; (defrule top :section#top)
-;; (defrule main :section#main)
-;; (defrule sidebar :section#sidebar)
-
-;; (defn dangerous
-;;   ([component content]
-;;    (dangerous component nil content))
-;;   ([component props content]
-;;    [component (assoc props :dangerouslySetInnerHTML {:__html content})]))
-
-(def palette
-  (let [base-color (hsl 0 100 50)]
-    (color/shades base-color)))
-
-
-;; -----------------------------------------------------------------------------
-;; Application State / Cursors
+;; State / Cursors
 
 (defn- get-window-width [] (.-innerWidth js/window))
 
 (defn- get-window-height [] (.-innerHeight js/window))
 
-(defonce app-state
+(defonce uni-state
   (r/atom
    {:app {:name "Styling"
           :version "0.1.0"}
@@ -100,7 +48,7 @@
 ;;   Better to write to a temp file and then rename the temp file.
 ;;   (spit "somefile" (prn-str @app-state)))
 
-(def rc (partial r/cursor app-state))
+(def rc (partial r/cursor uni-state))
 
 (defonce rc-app-name
   (rc [:app :name]))
@@ -192,20 +140,20 @@
      :margin "0"
      :padding "0"
      }]
-   (body
+   (cuss/body
     {:color "red"}
     )
-   (header
+   (cuss/header
     {:border {:width "1px" :style "dotted" :color "#333"}
      :color "blue"}
     )
-   (main
+   (cuss/main
     {:border {:width "2px" :style "dashed" :color "#666"}
      :color "red"
      :margin "1rem"
      :padding "1rem"}
     )
-   (footer
+   (cuss/footer
     {:border {:width "1px" :style "dotted" :color "#333"}
      :color "orange"}
     )
