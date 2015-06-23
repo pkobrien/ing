@@ -11,8 +11,7 @@
    [garden.arithmetic :refer [+ - * /]]
    [garden.color :as color :refer [hsl rgb]]
    [garden.core :refer [css]]
-   [garden.units :as u :refer [em pt px]])
-  (:import [goog Timer]))
+   [garden.units :as u :refer [em pt px]]))
 
 (enable-console-print!)
 
@@ -20,106 +19,143 @@
 
 
 ;; -----------------------------------------------------------------------------
-;; State / Cursors
+;; State (omni- : all : in all ways, places, etc. : without limits
+;;        http://www.merriam-webster.com/dictionary/omni-)
 
-(defn- get-window-width [] (.-innerWidth js/window))
-
-(defn- get-window-height [] (.-innerHeight js/window))
-
-(defonce uni-state
+(defonce omni-state
   (r/atom
    {:app {:name "Styling"
-          :version "0.1.0"}
-    :click-counter 0
-    :current-time {:color "#ccc"
-                   :value (js/Date.)}
-    :mouse-pos {:x nil
-                :y nil}
-    :window {:width (get-window-width)
-             :height (get-window-height)}
+          :version "0.1.0"
+          }
+    :dom {:document-height (poly/get-document-height)
+          :viewport {:width (poly/get-viewport-width)
+                     :height (poly/get-viewport-height)}
+          }
+    :env {:mouse-pos {:x nil :y nil}
+          :time (poly/now)
+          }
+    :gui {:click-count 0
+          }
     }))
 
 ;; (defn load-state! []
-;;   (reset! app-state (read-string (slurp "somefile"))))
+;;   (reset! omni-state (read-string (slurp "somefile"))))
 
 ;; (defn save-state []
 ;;   Better to write to a temp file and then rename the temp file.
-;;   (spit "somefile" (prn-str @app-state)))
+;;   (spit "somefile" (prn-str @omni-state)))
 
-(def rc (partial r/cursor uni-state))
+
+;; -----------------------------------------------------------------------------
+;; Cursor Creators (Omni's little helpers)
+
+(def cc (partial r/cursor omni-state))
+
+(defonce cc-app (partial r/cursor (cc :app)))
+
+(defonce cc-dom (partial r/cursor (cc :dom)))
+
+(defonce cc-env (partial r/cursor (cc :env)))
+
+(defonce cc-gui (partial r/cursor (cc :gui)))
+
+
+;; -----------------------------------------------------------------------------
+;; Reactive Cursors (Cursors with watchers that, um, react to mutations, magically)
 
 (defonce rc-app-name
-  (rc [:app :name]))
+  (cc-app [:name]))
 
 (defonce rc-app-version
-  (rc [:app :version]))
+  (cc-app [:version]))
 
-(defonce rc-clicks
-  (r/lens-cursor (rc :click-counter) identity #(inc %)))
+(defonce rc-dom-document-h
+  (cc-dom [:document-height]))
 
-(defonce rc-current-time
-  (rc [:current-time :value]))
+(defonce rc-dom-viewport-h
+  (cc-dom [:viewport :height]))
 
-(defonce rc-mouse-pos
-  (rc :mouse-pos))
+(defonce rc-dom-viewport-w
+  (cc-dom [:viewport :width]))
 
-(defonce rc-mouse-pos-x
-  (rc [:mouse-pos :x]))
+(defonce rc-env-mouse-pos
+  (cc-env [:mouse-pos]))
 
-(defonce rc-mouse-pos-y
-  (rc [:mouse-pos :y]))
+(defonce rc-env-mouse-pos-x
+  (cc-env [:mouse-pos :x]))
 
-(defonce rc-window
-  (rc :window))
+(defonce rc-env-mouse-pos-y
+  (cc-env [:mouse-pos :y]))
 
-(defonce rc-window-h
-  (rc [:window :height]))
+(defonce rc-env-time
+  (cc-env [:time]))
 
-(defonce rc-window-w
-  (rc [:window :width]))
+(defonce rc-gui-click-count
+  (r/lens-cursor (cc-gui [:click-count]) identity inc))
 
 
 ;; -----------------------------------------------------------------------------
-;; Event Handlers
+;; State Mutators (reset! swap! assoc! dissoc! r/assoc-in! r/update! r/update-in!)
 
-(defn- listen-for-mousemove! []
-  (rdom/listen!
-   js/window "mousemove"
-   (fn [e]
-     (assoc! rc-mouse-pos :x (.-clientX e) :y (.-clientY e)))))
+(defn mutate-dom-size! [e]
+  (reset! rc-dom-viewport-w (poly/get-viewport-width))
+  (reset! rc-dom-viewport-h (poly/get-viewport-height))
+  (reset! rc-dom-document-h (poly/get-document-height)))
 
-(defn- listen-for-resize! []
-  (rdom/listen!
-   js/window "resize"
-   (fn [e]
-     (swap! rc-window assoc
-            :width (get-window-width)
-            :height (get-window-height)))))
+(defn mutate-env-time! []
+  (reset! rc-env-time (poly/now)))
 
-(defonce init-app-listeners
+(defn mutate-env-mouse-pos! [e]
+  (assoc! rc-env-mouse-pos :x (.-clientX e) :y (.-clientY e)))
+
+(defn mutate-gui-click-count! []
+  (reset! rc-gui-click-count))
+
+
+;; -----------------------------------------------------------------------------
+;; Event Handlers (On and on and on, over and over again...)
+
+(defn on-dom-resize [e]
+  (mutate-dom-size! e))
+
+(defn on-env-mouse-move [e]
+  (mutate-env-mouse-pos! e))
+
+(defn on-env-time []
+  (mutate-env-time!))
+
+(defn on-gui-button-click [e]
+  (mutate-gui-click-count!))
+
+
+;; -----------------------------------------------------------------------------
+;; Event Listeners (Shh! Did you hear that? Something's happening somewhere...)
+
+(defn listen-for-dom-resize! []
+  (rdom/listen! js/window "resize" on-dom-resize))
+
+(defn listen-for-env-mouse-move! []
+  (rdom/listen! js/window "mousemove" on-env-mouse-move))
+
+(defonce init-event-listeners
   (do
-    (listen-for-mousemove!)
-    (listen-for-resize!)))
-
-(defn on-button-click []
-  (reset! rc-clicks))
-
-(defonce on-interval-update-current-time!
-  (js/setInterval
-   #(reset! rc-current-time (js/Date.))
-   1000))  ; every second (1000 ms)
+    (listen-for-dom-resize!)
+    (listen-for-env-mouse-move!)))
 
 
 ;; -----------------------------------------------------------------------------
-;; Stylesheet
+;; Timers (Hickory, dickory, dock. The mouse ran up the clock.
+;;         The clock struck one, the mouse ran down, hickory, dickory, dock.)
 
-(defn set-stylesheet! [stylesheet]
-  (let [el (.createElement js/document "style")
-        node (.createTextNode js/document stylesheet)]
-    (.appendChild el node)
-    (.appendChild (.-head js/document) el)))
+(defonce timer-for-env-time
+  (js/setInterval on-env-time 1000))  ; every second (1000 ms)
 
-(def app-stylesheet
+
+;; -----------------------------------------------------------------------------
+;; Style ("You gotta have style. It helps you get down the stairs.
+;;        It helps you get up in the morning. It's a way of life")
+
+(defn get-stylesheet []
   (css
    [:*
     {:box-sizing "border-box"}]
@@ -159,41 +195,39 @@
 
 
 ;; -----------------------------------------------------------------------------
-;; Title
+;; Title ("Titles are but nicknames, and every nickname is a title")
 
-(defn set-title! [title]
-  (set! (.-title js/document) title))
+(defn get-title []
+  (str @rc-app-name " v" @rc-app-version))
 
-(defn bind-title! [rw-title]
-  (r/bind-attr* rw-title set-title! rdom/queue-animation))
+;; (defn bind-title! [rw-title]
+;;   (r/bind-attr* rw-title poly/set-title! rdom/queue-animation))
 
-(defn rw-app-title []
-  (rx (str @rc-app-name " " @rc-window-w " by " @rc-window-h)))
+;; (defn rw-app-title []
+;;   (rx (str @rc-app-name " " @rc-viewport-w " by " @rc-viewport-h)))
 
 ;; (def title-binding (bind-title! (rw-app-title)))
 
 ;; (r/dispose title-binding)
 
-(defn app-title []
-  (str @rc-app-name " v" @rc-app-version))
-
 
 ;; -----------------------------------------------------------------------------
-;; HTML
+;; HTML (We're almost there now. So close. The reactive gui of our dreams...)
 
-(defn app-html []
+(defn get-html []
   [:div {:style "max-width: 20rem"}
    [:header
     [:h1 "Header Level 1"]
     [:h2 "Header Level 2"]
     ]
    [:main
-    [:p "Date/Time: " (rx (str @rc-current-time))]
-    [:p "Window size: " rc-window-w "px by " rc-window-h "px"]
-    [:p "Mouse position: (" rc-mouse-pos-x ", " rc-mouse-pos-y ")"]
-    [:p "Frames/second (60 max): " rdom/fps]
-    [:p "Button Clicks: " rc-clicks " "
-     [:button {:on-click on-button-click} "Click Me!"]]
+    [:p "Date/Time:" (rx (str @rc-env-time))]
+    [:p "Viewport size " rc-dom-viewport-w "px by " rc-dom-viewport-h "px"]
+    [:p "Document height " rc-dom-document-h "px"]
+    [:p "Mouse position (" rc-env-mouse-pos-x ", " rc-env-mouse-pos-y ")"]
+    [:p "Frames/second (60 max) " rdom/fps]
+    [:p "Button Clicks " rc-gui-click-count " "
+     [:button {:on-click on-gui-button-click} "Click Me!"]]
     ]
    [:footer
     [:p "Footer content."]
@@ -202,9 +236,9 @@
 
 
 ;; -----------------------------------------------------------------------------
-;; Init/Mount
+;; Init/Mount (Let's get this party started!!!)
 
 (defn ^:export init []
-  (set-stylesheet! app-stylesheet)
-  (set-title! (app-title))
-  (rdom/mount! "app" (app-html)))
+  (poly/set-stylesheet! (get-stylesheet))
+  (poly/set-title! (get-title))
+  (rdom/mount! "app" (get-html)))
