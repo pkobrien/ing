@@ -11,7 +11,8 @@
    [garden.arithmetic :refer [+ - * /]]
    [garden.color :as color :refer [hsl rgb]]
    [garden.core :refer [css]]
-   [garden.units :as u :refer [em pt px]]))
+   [garden.units :as u :refer [em pt px]]
+   [goog]))
 
 (enable-console-print!)
 
@@ -230,10 +231,19 @@
     [:h2 "Header Level 2"]
     ]
    [:main
+    [:p "goog.global " (str goog.global)]
+    [:p "goog.global.COMPILED " goog.global.COMPILED]
+    [:p "goog.DEBUG " goog.DEBUG]
+    [:p "goog.LOCALE " goog.LOCALE]
+    [:p "goog.TRUSTED_SITE " goog.TRUSTED_SITE]
+    [:p "goog.STRICT_MODE_COMPATIBLE " goog.STRICT_MODE_COMPATIBLE]
+    [:p "goog.DISALLOW_TEST_ONLY_CODE " goog.DISALLOW_TEST_ONLY_CODE]
+    [:p "goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING " goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING]
+    [:p "goog.now() " (goog/now)]
     [:p "Date/Time " (rx (str @rc-env-time))]
     [:p "Viewport size " rc-dom-viewport-w "px by " rc-dom-viewport-h "px"]
     [:p "Document height " rc-dom-document-h "px"]
-    [:p "Document scroll " rc-dom-document-scroll-x " by " rc-dom-document-scroll-y]
+;    [:p "Document scroll " rc-dom-document-scroll-x " by " rc-dom-document-scroll-y]
     [:p "Mouse position " "(" rc-env-mouse-pos-x ", " rc-env-mouse-pos-y ")"]
     [:p "Frames/second (60 max) " rdom/fps]
     [:p "Button Clicks " rc-gui-click-count " "
