@@ -25,20 +25,29 @@
 ;;   [goog.dom ViewportSizeMonitor]
 ;;   [goog.events EventType])
 
-(def viewport-size-monitor (atom nil))
+(def ^:private viewport-size-channel (atom nil))
 
-(defn get-viewport-size-monitor []
+(def ^:private viewport-size-monitor (atom nil))
+
+(defn- get-viewport-size-channel []
+  (if @viewport-size-channel @viewport-size-channel
+    (do
+      (reset! viewport-size-channel (chan sliding-buffer))
+      @viewport-size-channel)))
+
+(defn- get-viewport-size-monitor []
   (if @viewport-size-monitor @viewport-size-monitor
     (do
       (reset! viewport-size-monitor (ViewportSizeMonitor.))
       @viewport-size-monitor)))
 
 (defn listen-for-viewport-resize! [func]
-  (let [vsm (get-viewport-size-monitor)]
-    (events/listen vsm
+  (let [monitor (get-viewport-size-monitor)
+        channel (get-viewport-size-channel)]
+    (events/listen monitor
                    EventType.RESIZE
                    (fn [e]
-                     (let [size (.getSize vsm)
+                     (let [size (.getSize monitor)
                            w (.-width size)
                            h (.-height size)]
                        (func w h))))))
