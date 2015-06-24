@@ -24,7 +24,7 @@
 
 (defonce omni-state
   (r/atom
-   {:app {:name "Styling"
+   {:app {:name "Informing"
           :version "0.1.0"
           }
     :dom {:document-height nil
@@ -103,18 +103,18 @@
 ;; -----------------------------------------------------------------------------
 ;; State Mutators (reset! swap! assoc! dissoc! r/assoc-in! r/update! r/update-in!)
 
-(defn mutate-dom-size! [e]
-  (reset! rc-dom-viewport-w (poly/get-viewport-width))
-  (reset! rc-dom-viewport-h (poly/get-viewport-height))
+(defn mutate-dom-window-size! [w h]
   (reset! rc-dom-document-h (poly/get-document-height))
   (reset! rc-dom-document-scroll-x (poly/get-document-scroll-x))
-  (reset! rc-dom-document-scroll-y (poly/get-document-scroll-y)))
+  (reset! rc-dom-document-scroll-y (poly/get-document-scroll-y))
+  (reset! rc-dom-viewport-h h)
+  (reset! rc-dom-viewport-w w))
 
 (defn mutate-env-time! []
   (reset! rc-env-time (poly/now)))
 
-(defn mutate-env-mouse-pos! [e]
-  (assoc! rc-env-mouse-pos :x (.-clientX e) :y (.-clientY e)))
+(defn mutate-env-mouse-pos! [x y]
+  (assoc! rc-env-mouse-pos :x x :y y))
 
 (defn mutate-gui-click-count! []
   (reset! rc-gui-click-count))
@@ -123,13 +123,16 @@
 ;; -----------------------------------------------------------------------------
 ;; Event Handlers (On and on and on, over and over again...)
 
-(defn on-dom-resize [e]
-  (mutate-dom-size! e))
+(defn on-dom-window-load [e]
+  (mutate-dom-window-size! (poly/get-viewport-width) (poly/get-viewport-height)))
+
+(defn on-dom-window-resize [w h]
+  (mutate-dom-window-size! w h))
 
 (defn on-env-mouse-move [e]
-  (mutate-env-mouse-pos! e))
+  (mutate-env-mouse-pos! (.-clientX e) (.-clientY e)))
 
-(defn on-env-time []
+(defn on-env-time-interval []
   (mutate-env-time!))
 
 (defn on-gui-button-click [e]
@@ -139,24 +142,22 @@
 ;; -----------------------------------------------------------------------------
 ;; Event Listeners (Shh! Did you hear that? Something's happening somewhere...)
 
-(defn listen-for-dom-resize! []
-  (rdom/listen! js/window "resize" on-dom-resize))
+(defonce listen-for-dom-window-load
+  (rdom/listen! js/window "load" on-dom-window-load))
 
-(defn listen-for-env-mouse-move! []
+(defonce listen-for-dom-window-resize
+  (poly/listen-for-viewport-resize! on-dom-window-resize))
+
+(defonce listen-for-env-mouse-move
   (rdom/listen! js/window "mousemove" on-env-mouse-move))
-
-(defonce init-event-listeners
-  (do
-    (listen-for-dom-resize!)
-    (listen-for-env-mouse-move!)))
 
 
 ;; -----------------------------------------------------------------------------
 ;; Timers (Hickory, dickory, dock. The mouse ran up the clock.
 ;;         The clock struck one, the mouse ran down, hickory, dickory, dock.)
 
-(defonce timer-for-env-time
-  (js/setInterval on-env-time 1000))  ; every second (1000 ms)
+(defonce interval-for-env-time
+  (js/setInterval on-env-time-interval 1000))  ; every second (1000 ms)
 
 
 ;; -----------------------------------------------------------------------------
@@ -229,7 +230,7 @@
     [:h2 "Header Level 2"]
     ]
    [:main
-    [:p "Date/Time:" (rx (str @rc-env-time))]
+    [:p "Date/Time " (rx (str @rc-env-time))]
     [:p "Viewport size " rc-dom-viewport-w "px by " rc-dom-viewport-h "px"]
     [:p "Document height " rc-dom-document-h "px"]
     [:p "Document scroll " rc-dom-document-scroll-x " by " rc-dom-document-scroll-y]
