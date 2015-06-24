@@ -2,6 +2,7 @@
   (:require
    [cljs.core :as cljs]
    [cljs.core.async :refer [<! chan put! sliding-buffer]]
+   [goog]
    [goog.dom :as dom]
    [goog.dom.classes :as classes]
    [goog.dom.forms :as forms]
@@ -19,11 +20,23 @@
 
 
 ;; -----------------------------------------------------------------------------
-;; Viewport Size Monitor (fixes bugs in some browsers)
+;; Top-Level goog properties/methods worth knowing about
 
-;; (:import
-;;   [goog.dom ViewportSizeMonitor]
-;;   [goog.events EventType])
+(comment
+  goog.global
+  goog.global.COMPILED
+  goog.DEBUG
+  goog.LOCALE
+  goog.TRUSTED_SITE
+  goog.STRICT_MODE_COMPATIBLE
+  goog.DISALLOW_TEST_ONLY_CODE
+  goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING
+  (goog/now)
+)
+
+
+;; -----------------------------------------------------------------------------
+;; Viewport Size Monitor (fixes bugs in some browsers)
 
 (def ^:private viewport-size-channel (atom nil))
 
