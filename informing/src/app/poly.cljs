@@ -12,8 +12,36 @@
    [goog.string :as gstring]
    [goog.style :as style]
    [goog.Uri])
-  (:import [goog Timer]
-           [goog.events.EventType]))
+  (:import
+   [goog.dom ViewportSizeMonitor]
+   [goog.events EventType]
+   [goog Timer]))
+
+
+;; -----------------------------------------------------------------------------
+;; Viewport Size Monitor (fixes bugs in some browsers)
+
+;; (:import
+;;   [goog.dom ViewportSizeMonitor]
+;;   [goog.events EventType])
+
+(def viewport-size-monitor (atom nil))
+
+(defn get-viewport-size-monitor []
+  (if @viewport-size-monitor @viewport-size-monitor
+    (do
+      (reset! viewport-size-monitor (ViewportSizeMonitor.))
+      @viewport-size-monitor)))
+
+(defn listen-for-viewport-resize! [func]
+  (let [vsm (get-viewport-size-monitor)]
+    (events/listen vsm
+                   EventType.RESIZE
+                   (fn [e]
+                     (let [size (.getSize vsm)
+                           w (.-width size)
+                           h (.-height size)]
+                       (func w h))))))
 
 
 ;; -----------------------------------------------------------------------------
