@@ -27,12 +27,12 @@
    {:app {:name "Styling"
           :version "0.1.0"
           }
-    :dom {:document-height (poly/get-document-height)
-          :viewport {:width (poly/get-viewport-width)
-                     :height (poly/get-viewport-height)}
+    :dom {:document-height nil
+          :document-scroll {:x nil :y nil}
+          :viewport {:width nil :height nil}
           }
     :env {:mouse-pos {:x nil :y nil}
-          :time (poly/now)
+          :time nil
           }
     :gui {:click-count 0
           }
@@ -72,6 +72,12 @@
 (defonce rc-dom-document-h
   (cc-dom [:document-height]))
 
+(defonce rc-dom-document-scroll-x
+  (cc-dom [:document-scroll :x]))
+
+(defonce rc-dom-document-scroll-y
+  (cc-dom [:document-scroll :y]))
+
 (defonce rc-dom-viewport-h
   (cc-dom [:viewport :height]))
 
@@ -100,7 +106,9 @@
 (defn mutate-dom-size! [e]
   (reset! rc-dom-viewport-w (poly/get-viewport-width))
   (reset! rc-dom-viewport-h (poly/get-viewport-height))
-  (reset! rc-dom-document-h (poly/get-document-height)))
+  (reset! rc-dom-document-h (poly/get-document-height))
+  (reset! rc-dom-document-scroll-x (poly/get-document-scroll-x))
+  (reset! rc-dom-document-scroll-y (poly/get-document-scroll-y)))
 
 (defn mutate-env-time! []
   (reset! rc-env-time (poly/now)))
@@ -224,7 +232,8 @@
     [:p "Date/Time:" (rx (str @rc-env-time))]
     [:p "Viewport size " rc-dom-viewport-w "px by " rc-dom-viewport-h "px"]
     [:p "Document height " rc-dom-document-h "px"]
-    [:p "Mouse position (" rc-env-mouse-pos-x ", " rc-env-mouse-pos-y ")"]
+    [:p "Document scroll " rc-dom-document-scroll-x " by " rc-dom-document-scroll-y]
+    [:p "Mouse position " "(" rc-env-mouse-pos-x ", " rc-env-mouse-pos-y ")"]
     [:p "Frames/second (60 max) " rdom/fps]
     [:p "Button Clicks " rc-gui-click-count " "
      [:button {:on-click on-gui-button-click} "Click Me!"]]
