@@ -5,14 +5,9 @@
    [goog]
    [goog.dom :as dom]
    [goog.dom.classes :as classes]
-   [goog.dom.forms :as forms]
-   [goog.dom.xml :as xml]
    [goog.events :as events]
-   [goog.net.Jsonp]
-   [goog.object :as gobj]
-   [goog.string :as gstring]
-   [goog.style :as style]
-   [goog.Uri])
+   [goog.string]
+   [goog.style])
   (:import
    [goog.dom ViewportSizeMonitor]
    [goog.events EventType]
@@ -20,11 +15,11 @@
 
 
 ;; -----------------------------------------------------------------------------
-;; Top-Level goog properties/methods worth knowing about
+;; The top-Level goog namespace has properties and functions worth knowing about.
 
 (comment
-  goog.global
-  goog.global.COMPILED
+  goog/global
+  goog/global.COMPILED
   goog.DEBUG
   goog.LOCALE
   goog.TRUSTED_SITE
@@ -57,13 +52,14 @@
 (defn listen-for-viewport-resize! [func]
   (let [monitor (get-viewport-size-monitor)
         channel (get-viewport-size-channel)]
-    (events/listen monitor
-                   EventType.RESIZE
-                   (fn [e]
-                     (let [size (.getSize monitor)
-                           w (.-width size)
-                           h (.-height size)]
-                       (func w h))))))
+    (events/listen
+     monitor
+     EventType.RESIZE
+     (fn [e]
+       (let [size (.getSize monitor)
+             w (.-width size)
+             h (.-height size)]
+         (func w h))))))
 
 
 ;; -----------------------------------------------------------------------------
@@ -125,15 +121,16 @@
 ;; -----------------------------------------------------------------------------
 ;; Misc
 
-(defn atom? [x]
-  (instance? Atom x))
-
 (defn now [] (js/Date.))
+
 
 
 
 ;; -----------------------------------------------------------------------------
 ;; Stuff that might be useful but needs to be vetted.
+
+;; (defn atom? [x]
+;;   (instance? Atom x))
 
 ;; (defn get-elements-by-tag-name-and-class
 ;;   ([tag-name]
