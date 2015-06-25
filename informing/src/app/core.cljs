@@ -232,6 +232,7 @@
     ]
    [:main
     [:p "goog.global " (str goog.global)]
+    [:p "(identical? goog.global js/window) " (identical? goog.global js/window)]
     [:p "goog.global.COMPILED " goog.global.COMPILED]
     [:p "goog.DEBUG " goog.DEBUG]
     [:p "goog.LOCALE " goog.LOCALE]
