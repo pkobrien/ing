@@ -14,7 +14,9 @@
    [garden.color :as color :refer [hsl rgb]]
    [garden.core :refer [css]]
    [garden.units :as u :refer [em pt px]]
-   [goog]))
+   [goog]
+   [goog.userAgent]
+   ))
 
 (enable-console-print!)
 
@@ -199,12 +201,16 @@
 ;; Style ("You gotta have style. It helps you get down the stairs.
 ;;        It helps you get up in the morning. It's a way of life")
 
-(defn get-stylesheet []
+(defn get-styles []
   (css
    [:*
     {:box-sizing "border-box"}]
+   [:html
+    {:font-size "100%"}]
    [:audio
     {:width "100%"}]
+   [:code
+    {:hyphens "none"}]
    [:img :video
     {:height "auto" :max-width "100%"}]
    [:div :span
@@ -219,7 +225,10 @@
      :padding "0"
      }]
    (cuss/body
-    {:color "red"}
+    {:color "red"
+     :hyphens "auto"
+     :overflow-wrap "break-word"
+     :word-wrap "break-word"}
     )
    (cuss/header
     {:border {:width "1px" :style "dotted" :color "#333"}
@@ -233,7 +242,7 @@
     )
    (cuss/footer
     {:border {:width "1px" :style "dotted" :color "#333"}
-     :color "orange"}
+     :color "green"}
     )
    ))
 
@@ -272,6 +281,9 @@
     (when *dev*
       [
        [:p "ClojureScript Version " cljs.core/*clojurescript-version*]
+       [:p "User Agent " (goog.userAgent/getUserAgentString)]
+       [:p "User Agent Version " goog.userAgent.VERSION]
+       [:p "Platform " goog.userAgent.PLATFORM]
        [:p "goog/global " (str goog/global)]
        [:p "(identical? goog/global js/window) " (identical? goog/global js/window)]
        [:p "goog/global.COMPILED " goog/global.COMPILED]
@@ -306,6 +318,6 @@
 ;; Init/Mount (Let's get this party started!!!)
 
 (defn ^:export init []
-  (poly/set-stylesheet! (get-stylesheet))
+  (poly/install-styles! (get-styles))
   (poly/set-title! (get-title))
   (rdom/mount! "app" (get-html)))
