@@ -18,6 +18,8 @@
    [goog.events EventType]
    [goog Timer]))
 
+(enable-console-print!)
+
 
 ;; -----------------------------------------------------------------------------
 ;; The top-Level goog namespace has properties and functions worth knowing about.
@@ -33,136 +35,6 @@
   goog.ENABLE_CHROME_APP_SAFE_SCRIPT_LOADING
   (goog/now)
 )
-
-
-;; -----------------------------------------------------------------------------
-;; Asynchronous Helpers
-
-(defn extract-mouse-info [e]
-  {:x (.-clientX e) :y (.-clientY e)})
-
-(defn get-mouse-channel
-  ([]
-   (get-mouse-channel (sliding-buffer 1)))
-  ([buffer]
-   (chan buffer (map extract-mouse-info))))
-
-(defn listen-for! [target event-type channel]
-  (events/listen target event-type #(put! channel %))
-  channel)
-
-(defn listen-for-mouse-move! [channel]
-  (listen-for! js/window EventType.MOUSEMOVE channel))
-
-(defn channel-for-mouse-move!
-  ([]
-   (listen-for-mouse-move! (get-mouse-channel)))
-  ([buffer]
-   (listen-for-mouse-move! (get-mouse-channel buffer))))
-
-
-;; #_(defn debounce
-;;   [in ms]
-;;   (let [out (chan)]
-;;     (go-loop [last-val nil]
-;;       (let [val (if (nil? last-val) (<! in) last-val)
-;;             timer (timeout ms)
-;;             [new-val ch] (alts! [in timer])]
-;;         (condp = ch
-;;           timer (do (>! out val) (recur nil))
-;;           in (recur new-val))))
-;;     out))
-
-;; (defn debounce
-;;   [msecs out]
-;;   (let [in (chan (sliding-buffer 1))]
-;;     (go-loop []
-;;       (when-let [val (<! in)]
-;;         (put! out val)
-;;         (<! (timeout msecs))
-;;         (recur)))
-;;     in))
-
-;; #_(def debounced
-;;   (debounce (:chan (event-chan js/window "mousemove")) 1000))
-
-;; #_(go
-;;   (while true
-;;     (let [e (<! debounced)]
-;;       (aset loc-div "innerHTML" (str (.-x e) ", " (.-y e))))))
-
-;; Borrowed from http://www.lispcast.com/core-async-code-style
-;; This function lifts a regular asynchronous function written with callback
-;; style, into core.async return-a-channel style.
-
-;; Example use of <<<
-;; (go
-;;   (js/console.log (<! (<<< search-google "unicorn droppings"))))
-
-;; (defn <<< [f & args]
-;;   (let [c (chan)]
-;;     (apply f (concat args [(fn [x]
-;;                              (if (or (nil? x)
-;;                                      (undefined? x))
-;;                                (close! c)
-;;                                (put! c x)))]))
-;;     c))
-
-
-;; -----------------------------------------------------------------------------
-;; Viewport Size Monitor
-
-(def ^:private viewport-size-channel (atom nil))
-
-(def ^:private viewport-size-monitor (atom nil))
-
-(defn- get-viewport-size-channel []
-  (if @viewport-size-channel @viewport-size-channel
-    (do
-      (reset! viewport-size-channel (chan sliding-buffer))
-      @viewport-size-channel)))
-
-(defn- get-viewport-size-monitor []
-  (if @viewport-size-monitor @viewport-size-monitor
-    (do
-      (reset! viewport-size-monitor (ViewportSizeMonitor.))
-      @viewport-size-monitor)))
-
-(defn- get-monitor-w-h
-  [monitor]
-  (let [size (.getSize monitor)
-        w (.-width size)
-        h (.-height size)]
-    [w h]))
-
-#_(defn listen-for-viewport-resize!
-  [func]
-  (let [monitor (get-viewport-size-monitor)]
-    (events/listen
-     monitor
-     EventType.RESIZE
-     (fn [e]
-       (let [size (.getSize monitor)
-             w (.-width size)
-             h (.-height size)]
-         (func w h))))))
-
-(defn listen-for-viewport-resize!
-  [func]
-  (let [monitor (get-viewport-size-monitor)]
-    (events/listen
-     monitor
-     EventType.RESIZE
-     #(apply func (get-monitor-w-h monitor)))))
-
-#_(defn listen-for-viewport-resize! []
-  (let [channel (chan sliding-buffer 1)
-        debounced (debounce 50 channel)
-        monitor (ViewportSizeMonitor.)]
-    (events/listen
-     monitor
-     EventType.RESIZE
-     #(put! debounced %))))
 
 
 ;; -----------------------------------------------------------------------------
@@ -245,9 +117,124 @@
   (goog.date.Date.))
 
 
+;; -----------------------------------------------------------------------------
+;; Events
+
+(defn listen!
+  ([channel func]
+   (go-loop []
+     (func (<! channel))
+     (recur)))
+  ([target event-type func]
+   (events/listen target event-type func)))
+
+(defn listen-put!
+  ([target event-type channel]
+   (events/listen target event-type #(put! channel %))
+   channel)
+  ([target event-type channel subject]
+   (events/listen target event-type #(put! channel subject))
+   channel))
+
+
+;; -----------------------------------------------------------------------------
+;; Mouse Channels
+
+(defn extract-mouse-info [e]
+  {:x (.-clientX e) :y (.-clientY e)})
+
+(defn get-mouse-channel
+  ([]
+   (get-mouse-channel (sliding-buffer 1)))
+  ([buffer]
+   (chan buffer (map extract-mouse-info))))
+
+(defn listen-put-mouse-move! [channel]
+  (listen-put! js/window EventType.MOUSEMOVE channel))
+
+(defn channel-for-mouse-move!
+  ([]
+   (listen-put-mouse-move! (get-mouse-channel)))
+  ([buffer]
+   (listen-put-mouse-move! (get-mouse-channel buffer))))
+
+
+;; -----------------------------------------------------------------------------
+;; Viewport Resize Channel
+
+(defn extract-viewport-size [monitor]
+  (let [size (.getSize monitor)
+        w (. size -width)
+        h (. size -height)]
+    {:width w :height h}))
+
+(defn get-viewport-resize-channel
+  ([]
+   (get-viewport-resize-channel (sliding-buffer 1)))
+  ([buffer]
+   (chan buffer (map extract-viewport-size))))
+
+(defn listen-put-viewport-resize! [channel]
+  (let [monitor (ViewportSizeMonitor.)]
+    (listen-put! monitor EventType.RESIZE channel monitor)))
+
+(defn channel-for-viewport-resize!
+  ([]
+   (listen-put-viewport-resize! (get-viewport-resize-channel)))
+  ([buffer]
+   (listen-put-viewport-resize! (get-viewport-resize-channel buffer))))
+
+
 
 ;; -----------------------------------------------------------------------------
 ;; Stuff that might be useful but needs to be vetted.
+
+;; #_(defn debounce
+;;   [in ms]
+;;   (let [out (chan)]
+;;     (go-loop [last-val nil]
+;;       (let [val (if (nil? last-val) (<! in) last-val)
+;;             timer (timeout ms)
+;;             [new-val ch] (alts! [in timer])]
+;;         (condp = ch
+;;           timer (do (>! out val) (recur nil))
+;;           in (recur new-val))))
+;;     out))
+
+;; (defn debounce
+;;   [msecs out]
+;;   (let [in (chan (sliding-buffer 1))]
+;;     (go-loop []
+;;       (when-let [val (<! in)]
+;;         (put! out val)
+;;         (<! (timeout msecs))
+;;         (recur)))
+;;     in))
+
+;; #_(def debounced
+;;   (debounce (:chan (event-chan js/window "mousemove")) 1000))
+
+;; #_(go
+;;   (while true
+;;     (let [e (<! debounced)]
+;;       (aset loc-div "innerHTML" (str (.-x e) ", " (.-y e))))))
+
+;; Borrowed from http://www.lispcast.com/core-async-code-style
+;; This function lifts a regular asynchronous function written with callback
+;; style, into core.async return-a-channel style.
+
+;; Example use of <<<
+;; (go
+;;   (js/console.log (<! (<<< search-google "unicorn droppings"))))
+
+;; (defn <<< [f & args]
+;;   (let [c (chan)]
+;;     (apply f (concat args [(fn [x]
+;;                              (if (or (nil? x)
+;;                                      (undefined? x))
+;;                                (close! c)
+;;                                (put! c x)))]))
+;;     c))
 
 ;; (defn atom? [x]
 ;;   (instance? Atom x))

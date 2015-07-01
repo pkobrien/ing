@@ -30,7 +30,8 @@
    {:app {:name "Informing"
           :version "0.1.0"
           }
-    :cha {:env-mouse-down nil
+    :cha {:dom-viewport-resize nil
+          :env-mouse-down nil
           :env-mouse-move nil
           :env-mouse-up nil
           }
@@ -78,6 +79,9 @@
 (defonce rc-app-version
   (cc-app [:version]))
 
+(defonce rc-cha-dom-viewport-resize
+  (cc-cha [:dom-viewport-resize]))
+
 (defonce rc-cha-env-mouse-down
   (cc-cha [:env-mouse-down]))
 
@@ -121,10 +125,7 @@
 ;; -----------------------------------------------------------------------------
 ;; State Mutators (reset! swap! assoc! dissoc! r/assoc-in! r/update! r/update-in!)
 
-(defn mutate-cha-env-mouse-move! [channel]
-  (reset! rc-cha-env-mouse-move channel))
-
-(defn mutate-dom-window-size! [w h]
+(defn mutate-dom-viewport-size! [w h]
   (reset! rc-dom-document-h (poly/get-document-height))
   (reset! rc-dom-document-scroll-x (poly/get-document-scroll-x))
   (reset! rc-dom-document-scroll-y (poly/get-document-scroll-y))
@@ -142,16 +143,26 @@
 
 
 ;; -----------------------------------------------------------------------------
+;; Channels
+
+(defonce setup-channels!
+  (do
+    (reset! rc-cha-dom-viewport-resize (poly/channel-for-viewport-resize!))
+    (reset! rc-cha-env-mouse-move      (poly/channel-for-mouse-move!))
+    true))
+
+
+;; -----------------------------------------------------------------------------
 ;; Event Handlers (On and on and on, over and over again...)
 
+(defn on-dom-viewport-resize [{:keys [width height]}]
+  (mutate-dom-viewport-size! width height))
+
 (defn on-dom-window-load [e]
-  (mutate-dom-window-size! (poly/get-viewport-width) (poly/get-viewport-height)))
+  (mutate-dom-viewport-size! (poly/get-viewport-width) (poly/get-viewport-height)))
 
-(defn on-dom-window-resize [w h]
-  (mutate-dom-window-size! w h))
-
-(defn on-env-mouse-move [mouse-info]
-  (mutate-env-mouse-pos! (:x mouse-info) (:y mouse-info)))
+(defn on-env-mouse-move [{:keys [x y]}]
+  (mutate-env-mouse-pos! x y))
 
 (defn on-env-time-interval []
   (mutate-env-time!))
@@ -161,27 +172,16 @@
 
 
 ;; -----------------------------------------------------------------------------
-;; Event Channels
-
-(defonce channel-for-env-mouse-move
-  (mutate-cha-env-mouse-move! (poly/channel-for-mouse-move!)))
-
-
-;; -----------------------------------------------------------------------------
 ;; Event Listeners (Shh! Did you hear that? Something's happening somewhere...)
 
-(defonce listen-for-dom-window-load
-  (rdom/listen! js/window "load" on-dom-window-load))
+(defonce listen-for-dom-viewport-resize!
+  (poly/listen! @rc-cha-dom-viewport-resize on-dom-viewport-resize))
 
-(defonce listen-for-dom-window-resize
-  (poly/listen-for-viewport-resize! on-dom-window-resize))
+(defonce listen-for-dom-window-load!
+  (poly/listen! js/window "load" on-dom-window-load))
 
-(defonce listen-for-env-mouse-move
-  (let [channel @rc-cha-env-mouse-move]
-    (go-loop []
-      (let [mouse-info (<! channel)]
-        (on-env-mouse-move mouse-info))
-        (recur))))
+(defonce listen-for-env-mouse-move!
+  (poly/listen! @rc-cha-env-mouse-move on-env-mouse-move))
 
 
 ;; -----------------------------------------------------------------------------
