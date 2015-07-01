@@ -38,6 +38,22 @@
 
 
 ;; -----------------------------------------------------------------------------
+;; String Helpers
+
+(defn html-escape
+  ([s]
+   (goog.string/htmlEscape s))
+  ([s is-likely-to-contain-html-chars?]
+   (goog.string/htmlEscape s is-likely-to-contain-html-chars?)))
+
+(defn regexp-escape [s]
+  (goog.string.regExpEscape s))
+
+(defn whitespace-escape [s xml?]
+  (goog.string.whitespaceEscape s xml?))
+
+
+;; -----------------------------------------------------------------------------
 ;; Date and Time (For additional functionality use the cljs-time library:
 ;;                https://github.com/andrewmcveigh/cljs-time)
 
@@ -94,6 +110,12 @@
 (defn get-element [id]
   (dom/getElement (name id)))
 
+(defn get-elements-by-tag-name-and-class
+  ([tag-name]
+   (dom/getElementsByTagNameAndClass (name tag-name)))
+  ([tag-name class-name]
+   (dom/getElementsByTagNameAndClass (name tag-name) (name class-name))))
+
 (def request-animation-frame
   (or
    (.-requestAnimationFrame js/window)
@@ -107,14 +129,25 @@
         #(f (- (.getTime (js/Date.)) t0))
         16.66666)))))
 
-(defn set-stylesheet! [stylesheet]
-  (let [el (.createElement js/document "style")
-        node (.createTextNode js/document stylesheet)]
-    (.appendChild el node)
-    (.appendChild (.-head js/document) el)))
+;; (defn set-stylesheet! [stylesheet]
+;;   (let [el (.createElement js/document "style")
+;;         node (.createTextNode js/document stylesheet)]
+;;     (.appendChild el node)
+;;     (.appendChild (.-head js/document) el)))
 
 (defn set-title! [title]
   (set! (.-title js/document) title))
+
+
+;; -----------------------------------------------------------------------------
+;; Style
+
+(defn install-styles! [styles]
+  (goog.style/installStyles styles))
+
+(defn get-page-offset [element]
+  (let [coord (goog.style/getPageOffset element)]
+    {:x (.-x coord) :y (.-y coord)}))
 
 
 ;; -----------------------------------------------------------------------------
@@ -199,4 +232,5 @@
 
 (defn listen-for-window-load! [func]
   (listen! js/window EventType.LOAD func))
+
 
