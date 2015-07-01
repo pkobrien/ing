@@ -51,12 +51,6 @@
 ;; (defn atom? [x]
 ;;   (instance? Atom x))
 
-;; (defn get-elements-by-tag-name-and-class
-;;   ([tag-name]
-;;    (dom/getElementsByTagNameAndClass (name tag-name)))
-;;   ([tag-name class-name]
-;;    (dom/getElementsByTagNameAndClass (name tag-name) (name class-name))))
-
 ;; (defn by-tag-name
 ;;   ([tag-name] (by-tag-name tag-name nil))
 ;;   ([tag-name el] (array-seq (dom/getElementsByTagNameAndClass tag-name nil el))))
