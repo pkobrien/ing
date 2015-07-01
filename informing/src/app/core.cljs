@@ -174,14 +174,17 @@
 ;; -----------------------------------------------------------------------------
 ;; Event Listeners (Shh! Did you hear that? Something's happening somewhere...)
 
+#_(defonce listen-for-dom-viewport-resize!
+  (poly/listen-for-viewport-resize! on-dom-viewport-resize))
+
 (defonce listen-for-dom-viewport-resize!
-  (poly/listen! @rc-cha-dom-viewport-resize on-dom-viewport-resize))
+  (poly/listen-take! @rc-cha-dom-viewport-resize on-dom-viewport-resize))
 
 (defonce listen-for-dom-window-load!
   (poly/listen! js/window "load" on-dom-window-load))
 
 (defonce listen-for-env-mouse-move!
-  (poly/listen! @rc-cha-env-mouse-move on-env-mouse-move))
+  (poly/listen-take! @rc-cha-env-mouse-move on-env-mouse-move))
 
 
 ;; -----------------------------------------------------------------------------
