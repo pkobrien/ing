@@ -42,6 +42,7 @@
 (defrule body :body)
 (defrule footer :footer)
 (defrule header :header)
+(defrule html :html)
 (defrule main :main)
 
 (defrule headings :h1 :h2 :h3)
