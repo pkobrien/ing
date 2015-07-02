@@ -11,6 +11,7 @@
     [org.clojure/core.async "0.1.346.0-17112a-alpha"]
     [freactive "0.2.0-SNAPSHOT"]
     [garden "1.2.5"]
+    [ion/poly "0.1.0"]
   ])
 
 (require

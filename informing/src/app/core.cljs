@@ -5,7 +5,6 @@
    [freactive.macros :refer [rx]])
   (:require
    [app.cuss :as cuss]
-   [app.poly :as poly]
    [cljs.core]
    [freactive.core :as r]
    [freactive.dom :as rdom]
@@ -16,6 +15,7 @@
    [garden.units :as u :refer [em pt px]]
    [goog]
    [goog.userAgent]
+   [ion.poly.core :as poly]
    ))
 
 (enable-console-print!)
