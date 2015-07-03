@@ -75,12 +75,6 @@
 ;; (defrule main :section#main)
 ;; (defrule sidebar :section#sidebar)
 
-;; (defn dangerous
-;;   ([component content]
-;;    (dangerous component nil content))
-;;   ([component props content]
-;;    [component (assoc props :dangerouslySetInnerHTML {:__html content})]))
-
 (def palette
   (let [base-color (hsl 0 100 50)]
     (color/shades base-color)))
