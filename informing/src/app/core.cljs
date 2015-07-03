@@ -201,9 +201,8 @@
 ;; Style ("You gotta have style. It helps you get down the stairs.
 ;;        It helps you get up in the morning. It's a way of life")
 
-(defn get-styles []
-  (css
-   [:*
+(defn get-base-styles []
+  [[:*
     {:box-sizing "border-box"}]
    [:html
     {:font-size "100%"}]
@@ -213,7 +212,13 @@
     {:hyphens "none"}]
    [:img :video
     {:height "auto" :max-width "100%"}]
-   [:div :span
+   [:body
+    {:hyphens "auto"
+     :overflow-wrap "break-word"
+     :word-wrap "break-word"}]])
+
+(defn get-custom-styles []
+  [[:div :span
     {:box-sizing "border-box"
      :position "relative"
      :display "flex"
@@ -225,10 +230,7 @@
      :padding "0"
      }]
    (cuss/body
-    {:color "red"
-     :hyphens "auto"
-     :overflow-wrap "break-word"
-     :word-wrap "break-word"}
+    {:color "red"}
     )
    (cuss/header
     {:border {:width "1px" :style "dotted" :color "#333"}
@@ -243,8 +245,12 @@
    (cuss/footer
     {:border {:width "1px" :style "dotted" :color "#333"}
      :color "green"}
-    )
-   ))
+    )])
+
+(defn get-styles []
+  (css {:pretty-print? false}
+       (get-base-styles)
+       (get-custom-styles)))
 
 
 ;; -----------------------------------------------------------------------------
