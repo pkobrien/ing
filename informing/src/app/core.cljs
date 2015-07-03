@@ -4,7 +4,6 @@
    [cljs.core.async.macros :refer [go go-loop]]
    [freactive.macros :refer [rx]])
   (:require
-   [app.cuss :as cuss]
    [cljs.core]
    [freactive.core :as r]
    [freactive.dom :as rdom]
@@ -15,6 +14,7 @@
    [garden.units :as u :refer [em pt px]]
    [goog]
    [goog.userAgent]
+   [ion.cuss.core :as cuss]
    [ion.poly.core :as poly]
    ))
 
